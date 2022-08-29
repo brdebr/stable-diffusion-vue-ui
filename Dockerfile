@@ -12,7 +12,7 @@ COPY ./frontend/ .
 
 RUN npm ci
 
-# assets are in the folder /app/dist
+# assets are in the folder /frontend-app/dist
 RUN npm run build
 
 # Python API

@@ -1,7 +1,7 @@
 <template>
   <div class="vaisd-input-component">
     <label class="flex flex-wrap relative">
-      <div class="w-full flex gap-1 justify-between items-center mb-3">
+      <div class="w-full flex items-center mb-3">
         <span data-test="label">
           {{ label }}
         </span>
@@ -11,6 +11,15 @@
         v-if="type === 'text'"
         v-model:value="modelValue"
         type="text"
+        :placeholder="label"
+      />
+      <n-input-number
+        v-if="type === 'number'"
+        v-model:value="numValue"
+        class="w-full"
+        :min="min"
+        :max="max"
+        :step="step"
         :placeholder="label"
       />
       <n-input
@@ -36,7 +45,7 @@
 </template>
 <script setup lang="ts">
 import { PropType, ref, watch } from "vue";
-import { NSelect, NInput } from "naive-ui";
+import { NSelect, NInput, NInputNumber } from "naive-ui";
 import { naiveUiThemeOverrides } from "../constants";
 
 const props = defineProps({
@@ -53,8 +62,20 @@ const props = defineProps({
     required: true,
   },
   type: {
-    type: String as PropType<"text" | "textarea" | "select">,
+    type: String as PropType<"text" | "number" | "textarea" | "select">,
     default: "text",
+  },
+  min: {
+    type: Number,
+    default: 0,
+  },
+  max: {
+    type: Number,
+    default: 100,
+  },
+  step: {
+    type: Number,
+    default: 1,
   },
   options: {
     type: Array as PropType<{ value: string; text: string }[]>,
@@ -70,6 +91,11 @@ const emit = defineEmits(["update:modelValue"]);
 const themeOverrides = naiveUiThemeOverrides;
 
 const modelValue = ref(props.modelValue);
+
+const numValue = ref<number>(parseInt(props.modelValue));
+watch(numValue, (newModelValue) => {
+  modelValue.value = newModelValue.toString();
+});
 
 watch(modelValue, (newModelValue) => {
   emit("update:modelValue", newModelValue);

@@ -50,8 +50,13 @@ export const generateImage = async (data: GeneratedImageData) => {
 }
 
 export const checkServer = async () => {
-  // @ts-expect-error This is to allow the user to override the API endpoint
-  const response = await fetch(window.SD_URL || API_GENERATE_HEALTH);
-  const responseData = await response.json();
-  return responseData[0] === 'OK';
+  try {
+    // @ts-expect-error This is to allow the user to override the API endpoint
+    const response = await fetch(window.SD_URL || API_GENERATE_HEALTH);
+    const responseData = await response.json();
+    return responseData[0] === 'OK';
+  } catch (error) {
+    console.log(error)
+    return false;
+  }
 }
