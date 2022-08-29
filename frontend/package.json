@@ -6,13 +6,21 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "serve": "http-server dist/ --cors --gzip --port=3000",
+    "format": "prettier . --write"
   },
   "dependencies": {
+    "@vueuse/core": "^9.1.1",
+    "http-server": "^14.1.1",
+    "pinia": "^2.0.21",
     "vue": "^3.2.37"
   },
   "devDependencies": {
+    "@vicons/carbon": "^0.12.0",
     "@vitejs/plugin-vue": "^3.0.3",
+    "naive-ui": "^2.32.2",
+    "prettier": "2.7.1",
     "sass": "^1.54.5",
     "typescript": "^4.6.4",
     "vite": "^3.0.7",

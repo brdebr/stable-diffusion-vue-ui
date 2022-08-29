@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 from pydantic import BaseModel
 
@@ -8,6 +10,19 @@ LOCAL_SERVER_URL = 'http://stability-ai:5000'
 PREDICT_URL = LOCAL_SERVER_URL + '/predictions'
 
 app = FastAPI()
+
+api = FastAPI(openapi_prefix="/api")
+app.mount("/api", api)
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # defaults from https://huggingface.co/blog/stable_diffusion
 class ImageRequest(BaseModel):
@@ -22,11 +37,8 @@ class ImageRequest(BaseModel):
     seed: str = "30000"
     prompt_strength: str = "0.8"
 
-@app.get('/')
-def read_root():
-    return FileResponse('index.html')
 
-@app.get('/ping')
+@api.get('/server_status')
 async def ping():
     try:
         requests.get(LOCAL_SERVER_URL)
@@ -34,7 +46,7 @@ async def ping():
     except:
         return {'ERROR'}
 
-@app.post('/image')
+@api.post('/generate_image')
 async def image(req : ImageRequest):
     data = {
         "input": {
@@ -64,6 +76,5 @@ async def image(req : ImageRequest):
 
     return res.json()
 
-@app.get('/media/ding.mp3')
-def read_root():
-    return FileResponse('media/ding.mp3')
+
+app.mount("/", StaticFiles(directory="static", html = True), name="static")

@@ -11,28 +11,24 @@ services:
         reservations:
           devices:
             - capabilities: [gpu]
-
-  stable-diffusion-ui:
-    container_name: sd-ui
+  stable-diffusion-api:
+    container_name: sd-api
     ports:
       - '9000:9000'
     build:
       context: .
       dockerfile: Dockerfile
-    volumes:
-      - .:/app
     depends_on:
       - stability-ai
-
-  stable-diffusion-old-port-redirect:
-    container_name: sd-old-port-redirect
-    ports:
-      - '8000:8000'
-    build:
-      context: .
-      dockerfile: OldPortDockerfile
-    volumes:
-      - .:/app
+  # stable-diffusion-ui:
+  #   container_name: sd-vui
+  #   ports:
+  #     - '9000:3000'
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Frontent.Dockerfile
+  #   depends_on:
+  #     - stability-ai
 
 networks:
   default:
