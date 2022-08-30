@@ -34,6 +34,8 @@ RUN mkdir static
 
 COPY --from=node-build /frontend-app/dist/ /app/static/
 
+COPY index.html /app/static/old.html
+
 EXPOSE 9000
 
 ENTRYPOINT ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "9000"]

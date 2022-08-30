@@ -230,7 +230,7 @@ function playSound() {
 
 async function healthCheck() {
     try {
-        let res = await fetch('/ping')
+        let res = await fetch('/api/server_status')
         res = await res.json()
 
         if (res[0] == 'OK') {
@@ -249,7 +249,7 @@ async function doMakeImage(reqBody) {
     let seed = reqBody['seed']
 
     try {
-        res = await fetch('/image', {
+        res = await fetch('/api/generate_image', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -337,9 +337,9 @@ async function doMakeImage(reqBody) {
 
             maskSetting.style.display = 'block'
 
-            randomSeedField.checked = false
-            seedField.value = seed
-            seedField.disabled = false
+            // randomSeedField.checked = false
+            // seedField.value = seed
+            // seedField.disabled = false
         })
 
         imgSaveBtn.addEventListener('click', function() {

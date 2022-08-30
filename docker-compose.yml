@@ -18,17 +18,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    volumes:
+      - generated:/app/generated
     depends_on:
       - stability-ai
-  # stable-diffusion-ui:
-  #   container_name: sd-vui
-  #   ports:
-  #     - '9000:3000'
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Frontent.Dockerfile
-  #   depends_on:
-  #     - stability-ai
+
+volumes:
+  generated:
 
 networks:
   default:
