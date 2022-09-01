@@ -71,14 +71,17 @@ export const playSound = (sound: SoundName) => {
   audio.play();
 }
 
-export const isServerOnline = () => {
-  const isOnline = ref(false);
+export const useIsServerOnline = () => {
+  const isServerOnline = ref(false);
+  const timeCheckedServer = ref(0);
+
   const queueStore = useQueueStore();
   const checkIsServer = async () => {
     if(queueStore.running) return;
-    const previousVal = isOnline.value;
-    isOnline.value = await checkServer()
-    if(isOnline.value && isOnline.value !== previousVal) {
+    const previousVal = isServerOnline.value;
+    isServerOnline.value = await checkServer()
+    timeCheckedServer.value = Date.now();
+    if(isServerOnline.value && isServerOnline.value !== previousVal) {
       playSound('server-online')
     }
   }
@@ -90,6 +93,7 @@ export const isServerOnline = () => {
   }, 5000)
 
   return {
-    isOnline
+    isServerOnline,
+    timeCheckedServer
   };
 }

@@ -1,4 +1,4 @@
-import { NConfigProvider, GlobalThemeOverrides } from 'naive-ui'
+import { NConfigProvider, GlobalThemeOverrides, darkTheme } from 'naive-ui'
 
 export type GeneratedImageData = {
   id: string;
@@ -34,8 +34,8 @@ export type PayloadToQueueImage = Omit<GeneratedImageData, storedInPiniaParams>
 export const DATE_FORMAT = 'DD/MM/YYYY - HH:mm:ss';
 
 export const DEFAULT_SEED = '-1';
-export const DEFAULT_GUIDANCE = 8;
-export const DEFAULT_STEPS = 40;
+export const DEFAULT_GUIDANCE = 8.5;
+export const DEFAULT_STEPS = 60;
 export const DEFAULT_WIDTH = 512;
 export const DEFAULT_HEIGHT = 512;
 export const DEFAULT_PROMPT = 'concept art of a far-future city, key visual, summer day, highly detailed, digital painting, artstation, concept art, sharp focus, in harmony with nature, streamlined, by makoto shinkai and akihiko yoshida and hidari and wlop';
@@ -56,9 +56,32 @@ export const sizes = ["64", "128", "256", "512"] as const;
 export type Size = typeof sizes[number];
 
 
-export const naiveUiThemeOverrides: GlobalThemeOverrides = {
+import * as myTheme from './theme.json';
+
+
+export const naiveUiThemeOverrides = {
   common: {
-    primaryColor: '#DBE3F8',
-    primaryColorHover: '#BFCCF1'
+    primaryColor: "rgba(99, 148, 226, 1)",
+    primaryColorHover: "#5590FFFF",
+    primaryColorPressed: "#5A9CCEFF",
+    primaryColorSuppl: "red"
   },
-}
+  Button: {
+    colorPrimary: "#002d74",
+    colorHoverPrimary: "#0b2752FF",
+    colorFocusPrimary: "#041022",
+    textColorPrimary: "#FFFFFFDB",
+    textColorHoverPrimary: "#FFFFFFF7",
+    textColorPressedPrimary: "#FFFFFFFF",
+    textColorFocusPrimary: "#FFFFFFFF",
+    textColorDisabledPrimary: "#FFFFFFFF"
+  },
+  Slider: {
+    fillColor: "rgba(25, 69, 163, 1)",
+    fillColorHover: "rgba(35, 98, 198, 1)",
+    handleColor: "#BCD0FFFF"
+  }
+} as GlobalThemeOverrides
+
+// #0b2752
+// #002d74

@@ -1,14 +1,26 @@
 <template>
-  <n-config-provider
-    :theme="darkTheme"
-    :theme-overrides="naiveUiThemeOverrides"
-  >
+  <n-config-provider :theme="darkTheme" :theme-overrides="naiveUiThemeOverrides">
     <div id="vaisd-app-container" class="container mx-auto md:p-8 p-2">
       <div class="border-2 rounded p-5 flex flex-col gap-4">
-        <div class="flex gap-1">
-          <div class="w-20">Server: {{ isOnline ? "🟢" : "🔴" }}</div>
+        <div class="flex items-center gap-1">
+          <div class="w-15 flex justify-center" :title="`Server is ${isServerOnline ? 'online' : 'offline'}`">
+            <Activity
+              class="w-5 h-5"
+              :class="{
+                'text-yellow-500': !isServerOnline,
+                'text-green-500 animate-ping': isServerOnline,
+              }"
+              :key="timeCheckedServer"
+              style="animation-iteration-count: 1;"
+            />
+          </div>
           <h1 class="title w-full text-center">Stable diffusion UI</h1>
-          <div>{{ running ? "🔄" : "🔵" }}</div>
+          <div class="w-15 flex justify-center" :title="`Server is ${running ? 'processing...' : 'in stand-by waiting for a prompt'}`">
+            <component
+              class="w-6 h-6 text-yellow-100"
+              :is="running ? AiStatusInProgress : AiStatusQueued"
+            ></component>
+          </div>
         </div>
         <hr />
         <form @submit.prevent="handleFormSubmit">
@@ -29,17 +41,25 @@
                   >
                     use mask
                   </n-checkbox>
-                  <n-checkbox v-if="false" v-model:checked="isImage2image" class="m-1">
+                  <n-checkbox
+                    v-if="false"
+                    v-model:checked="isImage2image"
+                    class="m-1"
+                  >
                     img2img
                   </n-checkbox>
                 </div>
-                <button
-                  class="border text-xs py-1 px-2 bg-blue-900"
-                  type="button"
+                <n-button
                   @click="copyPromptToClipboard"
+                  type="primary"
+                  size="tiny"
+                  class=""
                 >
-                  Copy to clipboard
-                </button>
+                  <template #default> Copy to clipboard </template>
+                  <template #icon>
+                    <Copy class="w-[13px] h-[13px]" />
+                  </template>
+                </n-button>
               </div>
             </template>
           </v-input>
@@ -77,7 +97,12 @@
                       SVG, PNG, JPG or GIF (MAX. 800x400px)
                     </p>
                   </div>
-                  <input id="dropzone-file" type="file" @change="setImage2ImagePrompt" class="hidden" />
+                  <input
+                    id="dropzone-file"
+                    type="file"
+                    @change="setImage2ImagePrompt"
+                    class="hidden"
+                  />
                 </label>
               </div>
             </div>
@@ -159,12 +184,15 @@
             <n-button
               @click="handleFormSubmit"
               type="primary"
-              :disabled="!isOnline || !prompt || !steps"
+              :disabled="!isServerOnline || !prompt || !steps"
               class="min-w-9 w-[calc(100%-150px)]"
             >
-              Generate [ {{ imagesToGenerate }} ] image{{
+              <template #default> Generate [ {{ imagesToGenerate }} ] image{{
                 imagesToGenerate > 1 ? "s" : ""
-              }}
+              }} </template>
+              <template #icon>
+                <Cognitive class="w-8 h-8" />
+              </template>
             </n-button>
             <n-input-number
               v-model:value="imagesToGenerate"
@@ -175,7 +203,7 @@
           </n-input-group>
         </div>
         <div v-if="items.length">
-          <div class="mb-3">Queue</div>
+          <div class="mb-3">[ {{ items.length }} ] Queue</div>
           <div class="flex flex-col gap-3">
             <div>
               <n-input
@@ -203,7 +231,7 @@
                 type="primary"
                 @click="queueStore.removeFromQueue(item.id)"
               >
-                <n-icon class="min-w-[20px] text-red-700">
+                <n-icon class="min-w-[20px] text-red-300">
                   <MisuseOutline />
                 </n-icon>
               </n-button>
@@ -211,7 +239,7 @@
           </div>
         </div>
         <div v-if="images.length">
-          <div class="mb-3">Images:</div>
+          <div class="mb-3">[ {{ images.length }} ] Images:</div>
           <div class="flex flex-col gap-3">
             <div
               v-for="image in images"
@@ -245,8 +273,24 @@
                       ).value.replaceAll(/\"/g, "")
                     }}
                   </div>
-                  <div>
-                    {{ getDuration(image.elapsedMs) }}
+                  <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 mr-1">
+                      <div>
+                        {{ image.guidance }} CFG
+                      </div>
+                      <div
+                        class="block w-2 h-2 rounded-full bg-sky"
+                        :class="{
+                          'bg-sky-200': guidanceColors(image.guidance).isLow,
+                          'bg-sky-300': guidanceColors(image.guidance).isMedium,
+                          'bg-sky-500': guidanceColors(image.guidance).isHigh,
+                        }"
+                      ></div>
+                    </div>
+                    <div class="mx-1">{{ image.steps }}it</div>
+                    <div>
+                      {{ getDuration(image.elapsedMs) }}
+                    </div>
                   </div>
                 </div>
                 <div class="prompt">
@@ -275,7 +319,7 @@
   </n-config-provider>
 </template>
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, Ref, ref, watch } from "vue";
 import VInput from "./components/V-Input.vue";
 import {
   GeneratedImageData,
@@ -293,9 +337,17 @@ import {
   useDateFormat,
 } from "@vueuse/core";
 import { sizes } from "./constants";
-import { MisuseOutline, VolumeFileStorage } from "@vicons/carbon";
 import {
-  darkTheme,
+  MisuseOutline,
+  VolumeFileStorage,
+  Activity,
+  AiStatusInProgress,
+  AiStatusQueued,
+  Copy,
+  CloseOutline,
+  Cognitive,
+} from "@vicons/carbon";
+import {
   NConfigProvider,
   NInputGroup,
   NCheckbox,
@@ -307,6 +359,7 @@ import {
   NInputNumber,
   NInput,
   NSlider,
+  darkTheme,
   UploadFileInfo,
 } from "naive-ui";
 import { useQueueStore } from "./store/queue";
@@ -318,7 +371,7 @@ import {
   generateUUID,
   getDuration,
   getTimeAgo,
-  isServerOnline,
+  useIsServerOnline,
 } from "./functions";
 import { useConfigsStore } from "./store/configs";
 
@@ -359,20 +412,34 @@ const img2imgPromptStrength = ref(0.8);
 
 const setImage2ImagePrompt = (e: Event) => {
   const eventTarget = e.target as HTMLInputElement;
-  if(!eventTarget || !eventTarget?.files?.length) {
+  if (!eventTarget || !eventTarget?.files?.length) {
     return;
   }
 
-  const fileReader = new FileReader()
+  const fileReader = new FileReader();
   fileReader.onloadend = () => {
     img2imgFile.value = fileReader.result;
-  }
-  fileReader.readAsDataURL(eventTarget.files[0])
-}
+  };
+  fileReader.readAsDataURL(eventTarget.files[0]);
+};
 
 const minGuidance = 1;
 const maxGuidance = 20;
 const guidanceStep = 0.1;
+const guidanceColors = (guidance: string) => {
+  // return isLow if guidance is les than a third of maxGuidance
+  const isLow = parseInt(guidance) < maxGuidance / 3;
+  // return isHigh if guidance is greater than two thirds of maxGuidance
+  const isHigh = parseInt(guidance) > (2 * maxGuidance) / 3;
+  // return isMedium if guidance is between one third and two thirds of maxGuidance
+  const isMedium = !isLow && !isHigh;
+
+  return {
+    isLow,
+    isMedium,
+    isHigh,
+  };
+};
 
 const imagesToGenerate = ref(1);
 
@@ -380,7 +447,7 @@ const handleFormSubmit = async () => {
   queueStore.addToQueue(prompt.value, imagesToGenerate.value);
   queueStore.execute();
 };
-const { isOnline } = isServerOnline();
+const { isServerOnline, timeCheckedServer } = useIsServerOnline();
 
 watch(isImage2image, (newValue) => {
   if (!newValue) {
@@ -409,6 +476,18 @@ useIntervalFn(() => {
   .title {
     @apply text-lg font-bold;
   }
+}
+// "primaryColor": "rgba(99, 148, 226, 1)",
+// "primaryColorHover": "#5590FFFF",
+// "primaryColorPressed": "#5A9CCEFF",
+// "primaryColorSuppl": "rgba(42, 129, 148, 1)"
+
+casa {
+  color: rgba(99, 148, 226, 1);
+  color: #5590FFFF;
+  color: #5A9CCEFF;
+  color: rgba(42, 129, 148, 1);
+
 }
 
 .image-view {
