@@ -38,7 +38,22 @@ export const DEFAULT_GUIDANCE = 8.5;
 export const DEFAULT_STEPS = 60;
 export const DEFAULT_WIDTH = 512;
 export const DEFAULT_HEIGHT = 512;
-export const DEFAULT_PROMPT = 'concept art of a far-future city, key visual, summer day, highly detailed, digital painting, artstation, concept art, sharp focus, in harmony with nature, streamlined, by makoto shinkai and akihiko yoshida and hidari and wlop';
+// export const DEFAULT_PROMPT = 'concept art of a far-future city, , summer day, highly detailed, digital painting, artstation, concept art, sharp focus, in harmony with nature, streamlined, by makoto shinkai and akihiko yoshida and hidari and wlop';
+export const DEFAULT_PROMPT = 'old harbour';
+export const DEFAULT_MODIFIERS = [
+  "Tone mapped",
+  "Shiny",
+  "Intricate",
+  "Cinematic lighting",
+  "Highly detailed",
+  "Digital painting",
+  "Trending on artstation",
+  "Concept art",
+  "Smooth",
+  "Sharp focus",
+  "Illustration",
+  "by Terry Moore and Greg Rutkowski and Alphonse Mucha"
+]
 
 export const API_URL = '';
 export const API_GENERATE_IMAGE_URL = `${API_URL}/api/generate_image` as const;

@@ -87,15 +87,19 @@ async def image(req : ImageRequest):
     uuid_str = str(uuid.uuid4())
     unique_filename = f'{epoch_time}-{req.seed}-{uuid_str}'
     file_destiny = f'{OUTPUT_DIR}/{unique_filename}'
+    meta_file_destiny = f'{OUTPUT_DIR}/meta/{unique_filename}'
     metadata_extension = '.json'
     image_extension = '.png'
 
+    file_path = f'{file_destiny}{image_extension}'
+    metadata_file_path = f'{meta_file_destiny}{metadata_extension}'
+
     # create directory if it doesn't exist and create the metadata file
-    os.makedirs(os.path.dirname(f'{file_destiny}{metadata_extension}'), exist_ok=True)
-    with open(f'{file_destiny}meta/{metadata_extension}', 'w') as f:
+    os.makedirs(os.path.dirname(metadata_file_path), exist_ok=True)
+    with open(metadata_file_path, 'w') as f:
         json.dump(data, f)
 
-    with open(f'{file_destiny}{image_extension}', "wb") as fh:
+    with open(file_path, "wb") as fh:
         data_img = res.json()['output'][0].replace("data:image/png;base64,", "")
         fh.write(base64.b64decode(data_img))
 

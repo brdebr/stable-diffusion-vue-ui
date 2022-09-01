@@ -79,7 +79,8 @@
                     :options="filteredModifiers"
                     placeholder="Modifier"
                     :clear-after-select="true"
-                    @keyup.enter="handleAutoCompleteSubmit"
+                    :get-show="(val) => true"
+                    @keyup.enter="handleAutoCompleteSubmit(submit)"
                     @select="submit($event)"
                     @blur="deactivate"
                   />
@@ -375,6 +376,7 @@ import {
   Size,
   DATE_FORMAT,
   DEFAULT_PROMPT,
+DEFAULT_MODIFIERS,
 } from "./constants";
 import {
   useClipboard,
@@ -459,7 +461,7 @@ const copyPromptToClipboard = async () => {
 };
 
 const prompt = ref(DEFAULT_PROMPT);
-const modifiers = ref([]);
+const modifiers = ref(DEFAULT_MODIFIERS);
 
 const autoCompleteValue = ref('');
 const handleAutoCompleteSubmit = (submit: (val: string) => void) => {
@@ -477,12 +479,13 @@ const availableModifiersGrouped: ModifierGroup[] = Object.entries(modifiersFile)
 }));
 
 const filteredModifiers = computed(() => {
+  if(!autoCompleteValue.value) return availableModifiersGrouped;
   return availableModifiersGrouped.filter((group) => {
-    return group.children.some((modifier) => modifier.toLowerCase().includes(autoCompleteValue.value.toLowerCase()));
+    return group.children.some((modifier) => modifier.toLowerCase().includes(autoCompleteValue.value?.toLowerCase()));
   }).map(group => {
     return {
       ...group,
-      children: group.children.filter((modifier) => modifier.toLowerCase().includes(autoCompleteValue.value.toLowerCase())),
+      children: group.children.filter((modifier) => modifier.toLowerCase().includes(autoCompleteValue.value?.toLowerCase())),
     };
   })
 });

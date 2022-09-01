@@ -110,7 +110,8 @@
     "Apocalyptic",
     "Magic",
     "Fantasy",
-    "Sci-fi"
+    "Sci-fi",
+    "Key visual"
   ],
   "Emotions": ["Happy", "Excited", "Sad", "Lonely", "Angry", "Good", "Evil"],
   "Style of an artist or community": [
