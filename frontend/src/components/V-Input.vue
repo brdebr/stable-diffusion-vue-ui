@@ -26,6 +26,7 @@
         v-if="type === 'textarea'"
         v-model:value="modelValue"
         type="textarea"
+        :rows="7"
         :placeholder="label"
         :show-count="counter"
       >

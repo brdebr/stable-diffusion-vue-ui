@@ -2,6 +2,7 @@
   <n-config-provider :theme="darkTheme" :theme-overrides="naiveUiThemeOverrides">
     <div id="vaisd-app-container" class="container mx-auto md:p-8 p-2">
       <div class="border-2 rounded p-5 flex flex-col gap-4">
+        <!-- Header -->
         <div class="flex items-center gap-1">
           <div class="w-15 flex justify-center" :title="`Server is ${isServerOnline ? 'online' : 'offline'}`">
             <Activity
@@ -23,46 +24,85 @@
           </div>
         </div>
         <hr />
-        <form @submit.prevent="handleFormSubmit">
-          <v-input
-            input-id="prompt"
-            v-model="prompt"
-            label="Prompt"
-            type="textarea"
-            counter
-          >
-            <template #append-label>
-              <div class="flex items-center w-full ml-2 gap-6">
-                <div class="ml-auto flex items-center gap-3">
-                  <n-checkbox
-                    v-if="isImage2image"
-                    v-model:checked="isUsingMask"
-                    class="m-1"
+        <!-- Form -->
+        <form @submit.prevent="false" :key="configFormKey">
+          <div class="prompt-container">
+            <div class="mb-3">
+              <v-input
+                input-id="prompt"
+                v-model="prompt"
+                label="Prompt"
+                type="textarea"
+                counter
+              >
+                <template #append-label>
+                  <div class="flex items-center w-full ml-2 gap-6">
+                    <div class="ml-auto flex items-center gap-3">
+                      <n-checkbox
+                        v-if="isImage2image"
+                        v-model:checked="isUsingMask"
+                        class="m-1"
+                      >
+                        use mask
+                      </n-checkbox>
+                      <n-checkbox
+                        v-if="false"
+                        v-model:checked="isImage2image"
+                        class="m-1"
+                      >
+                        img2img
+                      </n-checkbox>
+                    </div>
+                    <n-button
+                      @click="copyPromptToClipboard"
+                      type="primary"
+                      size="tiny"
+                      class=""
+                    >
+                      <template #default> Copy to clipboard </template>
+                      <template #icon>
+                        <Copy class="w-[13px] h-[13px]" />
+                      </template>
+                    </n-button>
+                  </div>
+                </template>
+              </v-input>
+            </div>
+            <div>
+              <n-dynamic-tags v-model:value="modifiers">
+                <template #input="{ submit, deactivate }">
+                  <n-auto-complete
+                    ref="autoCompleteInstRef"
+                    v-model:value="autoCompleteValue"
+                    size="small"
+                    class="w-[40ch]"
+                    :options="filteredModifiers"
+                    placeholder="Modifier"
+                    :clear-after-select="true"
+                    @keyup.enter="handleAutoCompleteSubmit"
+                    @select="submit($event)"
+                    @blur="deactivate"
+                  />
+                </template>
+                <template #trigger="{ activate, disabled }">
+                  <n-button
+                    size="small"
+                    type="primary"
+                    dashed
+                    :disabled="disabled"
+                    @click="activate()"
                   >
-                    use mask
-                  </n-checkbox>
-                  <n-checkbox
-                    v-if="false"
-                    v-model:checked="isImage2image"
-                    class="m-1"
-                  >
-                    img2img
-                  </n-checkbox>
-                </div>
-                <n-button
-                  @click="copyPromptToClipboard"
-                  type="primary"
-                  size="tiny"
-                  class=""
-                >
-                  <template #default> Copy to clipboard </template>
-                  <template #icon>
-                    <Copy class="w-[13px] h-[13px]" />
-                  </template>
-                </n-button>
-              </div>
-            </template>
-          </v-input>
+                    <template #icon>
+                      <n-icon>
+                        <Add />
+                      </n-icon>
+                    </template>
+                    New Tag
+                  </n-button>
+                </template>
+              </n-dynamic-tags>
+            </div>
+          </div>
           <template v-if="false">
             <hr class="my-4" />
             <div>
@@ -129,7 +169,8 @@
           </template>
         </form>
         <hr class="my-3" />
-        <div class="sd-settings">
+        <!-- Stable Diffusion settingss -->
+        <div class="sd-settings" :key="configFormKey">
           <v-input input-id="seed" v-model="seed" label="Seed" type="text" />
           <v-input
             input-id="steps"
@@ -179,13 +220,14 @@
             </label>
           </div>
         </div>
+        <!-- Submit Button -->
         <div class="mt-13">
           <n-input-group>
             <n-button
               @click="handleFormSubmit"
               type="primary"
               :disabled="!isServerOnline || !prompt || !steps"
-              class="min-w-9 w-[calc(100%-150px)]"
+              class="min-w-9 w-[calc(100%-150px)] mr-px"
             >
               <template #default> Generate [ {{ imagesToGenerate }} ] image{{
                 imagesToGenerate > 1 ? "s" : ""
@@ -202,6 +244,7 @@
             />
           </n-input-group>
         </div>
+        <!-- Queue -->
         <div v-if="items.length">
           <div class="mb-3">[ {{ items.length }} ] Queue</div>
           <div class="flex flex-col gap-3">
@@ -238,23 +281,25 @@
             </div>
           </div>
         </div>
+        <!-- IMAGES -->
         <div v-if="images.length">
           <div class="mb-3">[ {{ images.length }} ] Images:</div>
           <div class="flex flex-col gap-3">
             <div
               v-for="image in images"
               :key="image.createdAt"
-              class="flex flex-col items-center md:(flex-row items-start) border"
+              class="image-display-container grid grid-cols-[auto] md:(grid-cols-[1fr,auto]) gap-2 border"
             >
-              <div class="flex flex-col p-1">
+              <div class="flex flex-col items-center p-1">
                 <img
-                  class="image-view"
+                  class="image-view mx-auto"
                   :src="image.image"
                   :title="'Click the image to download: ' + image.prompt"
                   :alt="image.prompt"
+                  :data-test="`image-${image.id}`"
                   @click="handleDownloadImage(image)"
                 />
-                <div class="flex justify-between items-center p-1 pt-2">
+                <div class="flex justify-between items-center p-1 pt-2 w-full">
                   <div class="text-[10px]">
                     {{ image.width }} x {{ image.height }}
                   </div>
@@ -263,8 +308,8 @@
                   </div>
                 </div>
               </div>
-              <div class="p-3 w-full">
-                <div class="image-data flex justify-between mb-3">
+              <div class="p-3 pb-1 grid grid-rows-[min-content,auto,min-content] gap-2 image-info-container">
+                <div class="image-data flex justify-between">
                   <div>
                     {{
                       useDateFormat(
@@ -278,14 +323,6 @@
                       <div>
                         {{ image.guidance }} CFG
                       </div>
-                      <div
-                        class="block w-2 h-2 rounded-full bg-sky"
-                        :class="{
-                          'bg-sky-200': guidanceColors(image.guidance).isLow,
-                          'bg-sky-300': guidanceColors(image.guidance).isMedium,
-                          'bg-sky-500': guidanceColors(image.guidance).isHigh,
-                        }"
-                      ></div>
                     </div>
                     <div class="mx-1">{{ image.steps }}it</div>
                     <div>
@@ -293,22 +330,32 @@
                     </div>
                   </div>
                 </div>
-                <div class="prompt">
+                <div class="prompt h-full">
                   {{ image.prompt }}
                 </div>
-                <div class="hidden">
-                  <div>
-                    <span> guidance </span>
-                    <span>
-                      {{ image.guidance }}
-                    </span>
-                  </div>
-                  <div>
-                    <span> steps </span>
-                    <span>
-                      {{ image.steps }}
-                    </span>
-                  </div>
+                <div class="flex justify-between">
+                  <n-button
+                  @click="setImageConfigToForm(image)"
+                  type="primary"
+                  size="tiny"
+                  class=""
+                >
+                  <template #default>Copy settings to form</template>
+                  <template #icon>
+                    <Copy class="w-[13px] h-[13px]" />
+                  </template>
+                </n-button>
+                  <n-button
+                  @click="imagesStore.removeImage(image.id)"
+                  type="primary"
+                  size="tiny"
+                  class=""
+                >
+                  <template #default> Hide </template>
+                  <template #icon>
+                    <Close class="w-[13px] h-[13px]" />
+                  </template>
+                </n-button>
                 </div>
               </div>
             </div>
@@ -319,7 +366,7 @@
   </n-config-provider>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, reactive, Ref, ref, watch } from "vue";
+import { computed, nextTick, onMounted, reactive, Ref, ref, watch } from "vue";
 import VInput from "./components/V-Input.vue";
 import {
   GeneratedImageData,
@@ -344,13 +391,15 @@ import {
   AiStatusInProgress,
   AiStatusQueued,
   Copy,
-  CloseOutline,
+  Close,
+  Add,
   Cognitive,
 } from "@vicons/carbon";
 import {
   NConfigProvider,
   NInputGroup,
   NCheckbox,
+  NIcon,
   NUpload,
   NText,
   NP,
@@ -359,6 +408,8 @@ import {
   NInputNumber,
   NInput,
   NSlider,
+  NDynamicTags,
+  NAutoComplete,
   darkTheme,
   UploadFileInfo,
 } from "naive-ui";
@@ -374,6 +425,14 @@ import {
   useIsServerOnline,
 } from "./functions";
 import { useConfigsStore } from "./store/configs";
+import modifiersFile from "./modifiers.json";
+
+type ModifierGroup = {
+  type: string;
+  key: string;
+  label: string;
+  children: string[]
+};
 
 const queueStore = useQueueStore();
 const { running, items, first } = storeToRefs(queueStore);
@@ -400,6 +459,34 @@ const copyPromptToClipboard = async () => {
 };
 
 const prompt = ref(DEFAULT_PROMPT);
+const modifiers = ref([]);
+
+const autoCompleteValue = ref('');
+const handleAutoCompleteSubmit = (submit: (val: string) => void) => {
+  submit(autoCompleteValue.value)
+  autoCompleteValue.value = ''
+}
+
+
+//turn modifiersFile int into array of modifier groups
+const availableModifiersGrouped: ModifierGroup[] = Object.entries(modifiersFile).map(([key, value]) => ({
+  type: "group",
+  label: key,
+  key: key,
+  children: value,
+}));
+
+const filteredModifiers = computed(() => {
+  return availableModifiersGrouped.filter((group) => {
+    return group.children.some((modifier) => modifier.toLowerCase().includes(autoCompleteValue.value.toLowerCase()));
+  }).map(group => {
+    return {
+      ...group,
+      children: group.children.filter((modifier) => modifier.toLowerCase().includes(autoCompleteValue.value.toLowerCase())),
+    };
+  })
+});
+
 const minSteps = 1;
 const maxSteps = 300;
 
@@ -428,9 +515,9 @@ const maxGuidance = 20;
 const guidanceStep = 0.1;
 const guidanceColors = (guidance: string) => {
   // return isLow if guidance is les than a third of maxGuidance
-  const isLow = parseInt(guidance) < maxGuidance / 3;
+  const isLow = parseFloat(guidance) < maxGuidance / 3;
   // return isHigh if guidance is greater than two thirds of maxGuidance
-  const isHigh = parseInt(guidance) > (2 * maxGuidance) / 3;
+  const isHigh = parseFloat(guidance) > (2 * maxGuidance) / 3;
   // return isMedium if guidance is between one third and two thirds of maxGuidance
   const isMedium = !isLow && !isHigh;
 
@@ -444,7 +531,9 @@ const guidanceColors = (guidance: string) => {
 const imagesToGenerate = ref(1);
 
 const handleFormSubmit = async () => {
-  queueStore.addToQueue(prompt.value, imagesToGenerate.value);
+  if(!isServerOnline.value) return;
+  const promptAndModifiers = `${prompt.value} ${modifiers.value.join(", ")}`;
+  queueStore.addToQueue(promptAndModifiers, imagesToGenerate.value);
   queueStore.execute();
 };
 const { isServerOnline, timeCheckedServer } = useIsServerOnline();
@@ -454,6 +543,19 @@ watch(isImage2image, (newValue) => {
     isUsingMask.value = false;
   }
 });
+
+const configFormKey = ref(1);
+
+const setImageConfigToForm = async (image: GeneratedImageData) => {
+  prompt.value = image.prompt;
+  guidance.value = parseFloat(image.guidance);
+  height.value = image.height;
+  width.value = image.width;
+  seed.value = image.seed;
+  steps.value = image.steps;
+
+  configFormKey.value = configFormKey.value * -1;
+};
 
 const handleDownloadImage = (image: GeneratedImageData) => {
   if (!image.image) {
@@ -481,6 +583,12 @@ useIntervalFn(() => {
 // "primaryColorHover": "#5590FFFF",
 // "primaryColorPressed": "#5A9CCEFF",
 // "primaryColorSuppl": "rgba(42, 129, 148, 1)"
+
+// :class="{
+//   'bg-sky-200': guidanceColors(image.guidance).isLow,
+//   'bg-sky-300': guidanceColors(image.guidance).isMedium,
+//   'bg-sky-500': guidanceColors(image.guidance).isHigh,
+// }"
 
 casa {
   color: rgba(99, 148, 226, 1);
