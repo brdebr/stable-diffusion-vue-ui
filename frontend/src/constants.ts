@@ -3,12 +3,13 @@ import { NConfigProvider, GlobalThemeOverrides, darkTheme } from 'naive-ui'
 
 export type Prompt = {
   text: string
-  tags: string[]
+  modifiers: string[]
+  finalPrompt: string
 }
 
 export type GeneratedImageData = {
   id: string;
-  prompt: string;
+  prompt: Prompt;
   seed: string;
   steps: string;
   guidance: string;
@@ -18,10 +19,8 @@ export type GeneratedImageData = {
   startedAt: number;
   queuedAt: number;
   elapsedMs: number;
-  /**
-   * result image in base64 format
-   */
-  image?: string;
+  imageUrl?: string;
+  imageFilename?: string;
   // img2img params ->
   init_image?: string;
   prompt_strength?: string;
