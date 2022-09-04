@@ -14,7 +14,8 @@
     "@vueuse/core": "^9.1.1",
     "http-server": "^14.1.1",
     "pinia": "^2.0.21",
-    "vue": "^3.2.37"
+    "vue": "^3.2.37",
+    "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
     "@vicons/carbon": "^0.12.0",

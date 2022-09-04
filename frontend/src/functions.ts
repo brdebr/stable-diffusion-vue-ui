@@ -68,7 +68,7 @@ export const getTimeAgo = (timestamp: number) => {
 export const playSound = (sound: SoundName) => {
   const audio = new Audio(SOUNDS_MAP[sound]);
   audio.volume = 0.5
-  audio.play();
+  audio.play().catch(() => console.log('Interact with the page first to play sound'));
 }
 
 export const useIsServerOnline = () => {
@@ -90,7 +90,7 @@ export const useIsServerOnline = () => {
   }),
   useIntervalFn(async () =>{
     await checkIsServer();
-  }, 5000)
+  }, 8000)
 
   return {
     isServerOnline,

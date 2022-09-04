@@ -1,7 +1,7 @@
 <template>
   <n-config-provider :theme="darkTheme" :theme-overrides="naiveUiThemeOverrides">
     <div id="vaisd-app-container" class="container mx-auto md:p-8 p-2">
-      <div class="border-2 rounded p-5 flex flex-col gap-4">
+      <div class="border-2 rounded p-3 md:p-5 flex flex-col gap-4">
         <!-- Header -->
         <div class="flex items-center gap-1">
           <div class="w-15 flex justify-center" :title="`Server is ${isServerOnline ? 'online' : 'offline'}`">
@@ -69,41 +69,54 @@
               </v-input>
             </div>
             <div>
-              <n-dynamic-tags v-model:value="modifiers">
-                <template #input="{ submit, deactivate }">
+              <draggable v-model="modifiers" :item-key="(el: string) => el" class="flex flex-wrap gap-2 w-full" handle=".drag-handle">
+                <template #header>
                   <n-auto-complete
                     ref="autoCompleteInstRef"
                     v-model:value="autoCompleteValue"
                     size="small"
                     class="w-[40ch]"
                     :options="filteredModifiers"
-                    placeholder="Modifier"
+                    placeholder="Add modifiers from the list or type your own"
                     :clear-after-select="true"
                     :get-show="(val) => true"
-                    @keyup.enter="handleAutoCompleteSubmit(submit)"
-                    @select="submit($event)"
-                    @blur="deactivate"
+                    @keyup.enter="handleAutoCompleteSubmit"
+                    @select="handleAutoCompleteSelect"
                   />
                 </template>
-                <template #trigger="{ activate, disabled }">
-                  <n-button
-                    size="small"
-                    type="primary"
-                    dashed
-                    :disabled="disabled"
-                    @click="activate()"
-                  >
+                <template #footer v-if="modifiers.length">
+                  <n-button size="small" color="#ef4444" tertiary @click="clearModifiers">
+                    <template #default>
+                      <span class="text-blue-100">
+                        Clear all
+                      </span>
+                    </template>
                     <template #icon>
                       <n-icon>
-                        <Add />
+                        <Delete />
                       </n-icon>
                     </template>
-                    New Tag
                   </n-button>
                 </template>
-              </n-dynamic-tags>
+                <template #item="{element}">
+                  <n-tag class="pl-0 pr-2" :color="{ color: '', textColor: '', borderColor: '#0043ae'}">
+                    <div class="flex items-center">
+                      <div class="drag-handle pl-1 pr-2 hover:(text-blue-200)" style="cursor: grab;">
+                        <Draggable class="w-5 h-5" />
+                      </div>
+                      <div class="modifier-tag text-[13px]" :title="element">
+                        {{ element }}
+                      </div>
+                      <div @click="removeModifier(element)" class="ml-2 cursor-pointer hover:text-cyan-500 transition-colors">
+                        <Close class="w-5 h-5" />
+                      </div>
+                    </div>
+                  </n-tag>
+                </template>
+              </draggable>
             </div>
           </div>
+          <!-- Images prompt -->
           <template v-if="false">
             <hr class="my-4" />
             <div>
@@ -293,7 +306,7 @@
               :key="image.createdAt"
               class="image-display-container grid grid-cols-[auto] md:(grid-cols-[1fr,auto]) gap-2 border"
             >
-              <div class="flex flex-col items-center p-1">
+              <div class="flex flex-col-reverse md:(flex-col) items-center p-1">
                 <img
                   class="image-view mx-auto"
                   :src="image.image"
@@ -302,7 +315,7 @@
                   :data-test="`image-${image.id}`"
                   @click="handleDownloadImage(image)"
                 />
-                <div class="flex justify-between items-center p-1 pt-2 w-full">
+                <div class="flex justify-between items-center p-1 md:(pt-2) w-full">
                   <div class="text-[10px]">
                     {{ image.width }} x {{ image.height }}
                   </div>
@@ -396,6 +409,8 @@ import {
   AiStatusQueued,
   Copy,
   Close,
+  Delete,
+  Draggable,
   Add,
   Cognitive,
 } from "@vicons/carbon";
@@ -412,6 +427,7 @@ import {
   NInputNumber,
   NInput,
   NSlider,
+  NTag,
   NDynamicTags,
   NAutoComplete,
   darkTheme,
@@ -430,6 +446,7 @@ import {
 } from "./functions";
 import { useConfigsStore } from "./store/configs";
 import modifiersFile from "./modifiers.json";
+import draggable from 'vuedraggable'
 
 type ModifierGroup = {
   type: string;
@@ -466,8 +483,12 @@ const prompt = ref(DEFAULT_PROMPT);
 const modifiers = ref(DEFAULT_MODIFIERS);
 
 const autoCompleteValue = ref('');
-const handleAutoCompleteSubmit = (submit: (val: string) => void) => {
-  submit(autoCompleteValue.value)
+const handleAutoCompleteSubmit = () => {
+  modifiers.value.push(autoCompleteValue.value)
+  autoCompleteValue.value = ''
+}
+const handleAutoCompleteSelect = (value: string | number) => {
+  modifiers.value.push(`${value}`)
   autoCompleteValue.value = ''
 }
 
@@ -491,6 +512,13 @@ const filteredModifiers = computed(() => {
     };
   })
 });
+
+const removeModifier = (modifier: string) => {
+  modifiers.value = modifiers.value.filter((m) => m !== modifier);
+};
+const clearModifiers = () => {
+  modifiers.value = [];
+};
 
 const minSteps = 1;
 const maxSteps = 300;
@@ -577,6 +605,12 @@ casa {
   color: #5A9CCEFF;
   color: rgba(42, 129, 148, 1);
 
+}
+
+.modifier-tag {
+  max-width: calc(100vw - 135px);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .image-view {
