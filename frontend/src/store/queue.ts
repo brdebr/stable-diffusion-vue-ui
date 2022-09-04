@@ -1,3 +1,4 @@
+import { API_URL } from './../constants';
 import { defineStore, storeToRefs } from "pinia"
 import { computed, nextTick, ref } from "vue";
 import { generateImage } from "../api";
@@ -65,9 +66,10 @@ export const useQueueStore = defineStore('queue', () => {
       guidance: `${guidance.value}`,
     };
 
-    const imageBase64Str = await generateImage(buildMergeImgWithConfigs(first.value, configParams));
+    // const imageBase64Str = await generateImage(buildMergeImgWithConfigs(first.value, configParams));
+    const imageFilename = await generateImage(buildMergeImgWithConfigs(first.value, configParams));
 
-    first.value.image = imageBase64Str;
+    first.value.image = `${API_URL}/ai-images/data/file/${imageFilename}`;
     first.value.createdAt = Date.now();
     first.value.elapsedMs = first.value.createdAt - first.value.startedAt;
 

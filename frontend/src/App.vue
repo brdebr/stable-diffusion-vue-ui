@@ -8,7 +8,7 @@
             <Activity
               class="w-5 h-5"
               :class="{
-                'text-yellow-500': !isServerOnline,
+                'text-yellow-500 animate-ping': !isServerOnline,
                 'text-green-500 animate-ping': isServerOnline,
               }"
               :key="timeCheckedServer"
@@ -234,7 +234,7 @@
                 imagesToGenerate > 1 ? "s" : ""
               }} </template>
               <template #icon>
-                <Cognitive class="w-8 h-8" />
+                <Cognitive class="w-5 h-5" />
               </template>
             </n-button>
             <n-input-number
@@ -275,9 +275,11 @@
                 type="primary"
                 @click="queueStore.removeFromQueue(item.id)"
               >
-                <n-icon class="min-w-[20px] text-red-300">
-                  <MisuseOutline />
-                </n-icon>
+                <template #icon>
+                  <n-icon>
+                    <MisuseOutline class="min-w-[20px] text-red-300" />
+                  </n-icon>
+                </template>
               </n-button>
             </div>
           </div>
@@ -516,26 +518,12 @@ const setImage2ImagePrompt = (e: Event) => {
 const minGuidance = 1;
 const maxGuidance = 20;
 const guidanceStep = 0.1;
-const guidanceColors = (guidance: string) => {
-  // return isLow if guidance is les than a third of maxGuidance
-  const isLow = parseFloat(guidance) < maxGuidance / 3;
-  // return isHigh if guidance is greater than two thirds of maxGuidance
-  const isHigh = parseFloat(guidance) > (2 * maxGuidance) / 3;
-  // return isMedium if guidance is between one third and two thirds of maxGuidance
-  const isMedium = !isLow && !isHigh;
-
-  return {
-    isLow,
-    isMedium,
-    isHigh,
-  };
-};
 
 const imagesToGenerate = ref(1);
 
 const handleFormSubmit = async () => {
   if(!isServerOnline.value) return;
-  const promptAndModifiers = `${prompt.value} ${modifiers.value.join(", ")}`;
+  const promptAndModifiers = modifiers.value.length ? `${prompt.value}, ${modifiers.value.join(", ")}` : prompt.value;
   queueStore.addToQueue(promptAndModifiers, imagesToGenerate.value);
   queueStore.execute();
 };
@@ -582,16 +570,6 @@ useIntervalFn(() => {
     @apply text-lg font-bold;
   }
 }
-// "primaryColor": "rgba(99, 148, 226, 1)",
-// "primaryColorHover": "#5590FFFF",
-// "primaryColorPressed": "#5A9CCEFF",
-// "primaryColorSuppl": "rgba(42, 129, 148, 1)"
-
-// :class="{
-//   'bg-sky-200': guidanceColors(image.guidance).isLow,
-//   'bg-sky-300': guidanceColors(image.guidance).isMedium,
-//   'bg-sky-500': guidanceColors(image.guidance).isHigh,
-// }"
 
 casa {
   color: rgba(99, 148, 226, 1);

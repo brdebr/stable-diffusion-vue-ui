@@ -15,6 +15,7 @@ export type GeneratedImageDataPayload = {
 export type GenerateImageResponseType = {
   status: string;
   output: string[];
+  filename: string;
 }
 
 // turn GeneratedImageData into GeneratedImageDataPayload
@@ -42,8 +43,9 @@ export const generateImage = async (data: GeneratedImageData) => {
       body: JSON.stringify(buildGenerateImagePayload(data)),
     })
     const responseData: GenerateImageResponseType = await response.json()
-    const imageBase64String = responseData.output[0];
-    return imageBase64String;
+    // const imageBase64String = responseData.output[0];
+    const imageUrl = responseData.filename;
+    return imageUrl;
   } catch (error) {
     console.log(error)
   }

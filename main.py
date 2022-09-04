@@ -82,11 +82,13 @@ async def image(req : ImageRequest):
     if res.status_code != 200:
         raise HTTPException(status_code=500, detail=res.text)
 
+    resObj = res.json()
+
     epoch_time = int(time.time())
 
     uuid_str = str(uuid.uuid4())
     unique_filename = f'{epoch_time}-{req.seed}-{uuid_str}'
-    file_destiny = f'{OUTPUT_DIR}/{unique_filename}'
+    file_destiny = f'{OUTPUT_DIR}/file/{unique_filename}'
     meta_file_destiny = f'{OUTPUT_DIR}/meta/{unique_filename}'
     metadata_extension = '.json'
     image_extension = '.png'
@@ -94,16 +96,21 @@ async def image(req : ImageRequest):
     file_path = f'{file_destiny}{image_extension}'
     metadata_file_path = f'{meta_file_destiny}{metadata_extension}'
 
+    resObj['uuid'] = uuid_str
+    resObj['epoch_time'] = epoch_time
+    resObj['filename'] = f'{unique_filename}{image_extension}'
+
     # create directory if it doesn't exist and create the metadata file
     os.makedirs(os.path.dirname(metadata_file_path), exist_ok=True)
     with open(metadata_file_path, 'w') as f:
         json.dump(data, f)
 
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, "wb") as fh:
-        data_img = res.json()['output'][0].replace("data:image/png;base64,", "")
+        data_img = resObj['output'][0].replace("data:image/png;base64,", "")
         fh.write(base64.b64decode(data_img))
 
-    return res.json()
+    return resObj
 
 
 app.mount("/ai-images/", StaticFiles(directory="generated", html = True), name="static")

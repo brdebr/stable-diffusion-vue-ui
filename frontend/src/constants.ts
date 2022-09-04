@@ -1,5 +1,11 @@
 import { NConfigProvider, GlobalThemeOverrides, darkTheme } from 'naive-ui'
 
+
+export type Prompt = {
+  text: string
+  tags: string[]
+}
+
 export type GeneratedImageData = {
   id: string;
   prompt: string;
@@ -34,11 +40,10 @@ export type PayloadToQueueImage = Omit<GeneratedImageData, storedInPiniaParams>
 export const DATE_FORMAT = 'DD/MM/YYYY - HH:mm:ss';
 
 export const DEFAULT_SEED = '-1';
-export const DEFAULT_GUIDANCE = 8.5;
+export const DEFAULT_GUIDANCE = 9;
 export const DEFAULT_STEPS = 60;
 export const DEFAULT_WIDTH = 512;
 export const DEFAULT_HEIGHT = 512;
-// export const DEFAULT_PROMPT = 'concept art of a far-future city, , summer day, highly detailed, digital painting, artstation, concept art, sharp focus, in harmony with nature, streamlined, by makoto shinkai and akihiko yoshida and hidari and wlop';
 export const DEFAULT_PROMPT = 'old harbour';
 export const DEFAULT_MODIFIERS = [
   "Tone mapped",
@@ -55,7 +60,7 @@ export const DEFAULT_MODIFIERS = [
   "by Terry Moore and Greg Rutkowski and Alphonse Mucha"
 ]
 
-export const API_URL = '';
+export const API_URL = import.meta.env.DEV ? 'http://localhost:9000' : '';
 export const API_GENERATE_IMAGE_URL = `${API_URL}/api/generate_image` as const;
 export const API_GENERATE_HEALTH = `${API_URL}/api/server_status` as const;
 
@@ -69,9 +74,6 @@ export type SoundName = keyof typeof SOUNDS_MAP;
 
 export const sizes = ["64", "128", "256", "512"] as const;
 export type Size = typeof sizes[number];
-
-
-import * as myTheme from './theme.json';
 
 
 export const naiveUiThemeOverrides = {
@@ -97,6 +99,3 @@ export const naiveUiThemeOverrides = {
     handleColor: "#BCD0FFFF"
   }
 } as GlobalThemeOverrides
-
-// #0b2752
-// #002d74
