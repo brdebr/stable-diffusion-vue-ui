@@ -25,7 +25,7 @@ export const randomIntegerInRange = (min: number, max: number) => Math.floor(Mat
 
 export const downloadImage = (imageData: string, name: string) => {
   const a = document.createElement('a');
-  a.download = `${name}.png`;
+  a.download = `${name}`;
   a.href = imageData;
   a.click();
 }

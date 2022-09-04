@@ -25,7 +25,9 @@ export const buildGenerateImagePayload = (data: GeneratedImageData) => {
     height: data.height,
     num_inference_steps: data.steps,
     num_outputs: 1,
-    prompt: data.prompt,
+    prompt: data.prompt.finalPrompt,
+    prompt_text: data.prompt.text,
+    prompt_modifiers: data.prompt.modifiers,
     seed: parseInt(data.seed) || '-1',
     width: data.width,
   }
@@ -43,7 +45,6 @@ export const generateImage = async (data: GeneratedImageData) => {
       body: JSON.stringify(buildGenerateImagePayload(data)),
     })
     const responseData: GenerateImageResponseType = await response.json()
-    // const imageBase64String = responseData.output[0];
     const imageUrl = responseData.filename;
     return imageUrl;
   } catch (error) {

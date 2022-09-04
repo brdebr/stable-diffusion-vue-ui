@@ -35,6 +35,8 @@ app.add_middleware(
 # defaults from https://huggingface.co/blog/stable_diffusion
 class ImageRequest(BaseModel):
     prompt: str
+    prompt_text: str
+    prompt_modifiers: list
     init_image: str = None # base64
     mask: str = None # base64
     num_outputs: str = "1"
@@ -67,6 +69,8 @@ async def image(req : ImageRequest):
             "guidance_scale": req.guidance_scale,
         }
     }
+    # check how much time it takes to generate the image
+    start_time = time.time()
 
     if req.init_image is not None:
         data['input']['init_image'] = req.init_image
@@ -99,18 +103,25 @@ async def image(req : ImageRequest):
     resObj['uuid'] = uuid_str
     resObj['epoch_time'] = epoch_time
     resObj['filename'] = f'{unique_filename}{image_extension}'
+    resObj['prompt_text'] = req.prompt_text
+    resObj['prompt_modifiers'] = req.prompt_modifiers
+    resObj['elapsed_time'] = time.time() - start_time
+
+    # merge data with resObj without output
+    finalObj = {**data['input'], **resObj}
+    finalObj.pop('output', None)
 
     # create directory if it doesn't exist and create the metadata file
     os.makedirs(os.path.dirname(metadata_file_path), exist_ok=True)
     with open(metadata_file_path, 'w') as f:
-        json.dump(data, f)
+        json.dump(finalObj, f)
 
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, "wb") as fh:
         data_img = resObj['output'][0].replace("data:image/png;base64,", "")
         fh.write(base64.b64decode(data_img))
 
-    return resObj
+    return finalObj
 
 
 app.mount("/ai-images/", StaticFiles(directory="generated", html = True), name="static")

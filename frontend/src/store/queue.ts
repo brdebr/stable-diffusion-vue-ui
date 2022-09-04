@@ -1,4 +1,4 @@
-import { API_URL } from './../constants';
+import { API_URL, Prompt } from './../constants';
 import { defineStore, storeToRefs } from "pinia"
 import { computed, nextTick, ref } from "vue";
 import { generateImage } from "../api";
@@ -15,8 +15,10 @@ type ConfigParams = {
   height: string;
 }
 const buildMergeImgWithConfigs = (item: PayloadToQueueImage, configs: ConfigParams): GeneratedImageData => {
+  const promptClone = {...item.prompt};
   return {
     ...item,
+    prompt: promptClone,
     seed: configs.seed,
     steps: configs.steps,
     guidance: configs.guidance,
@@ -35,7 +37,15 @@ export const useQueueStore = defineStore('queue', () => {
   const first = computed<PayloadToQueueImage | undefined>(() => items.value?.[0]);
   const running = computed(() => !!first.value?.startedAt);
 
-  const addToQueue = async (prompt: string, amount: number = 1) => {
+  const addToQueue = async (prompt: Prompt, amount: number = 1) => {
+    const text = prompt.text.trim();
+    prompt.text = text;
+
+    const modifiersText = prompt.modifiers.join(", ");
+
+    const finalPrompt = `${text}${modifiersText ? `, ${modifiersText}` : ""}`;
+    prompt.finalPrompt = finalPrompt;
+
     for await (let i of Array(amount).keys()) {
       const payload: PayloadToQueueImage = {
         id: generateUUID(),
@@ -66,10 +76,10 @@ export const useQueueStore = defineStore('queue', () => {
       guidance: `${guidance.value}`,
     };
 
-    // const imageBase64Str = await generateImage(buildMergeImgWithConfigs(first.value, configParams));
     const imageFilename = await generateImage(buildMergeImgWithConfigs(first.value, configParams));
 
-    first.value.image = `${API_URL}/ai-images/data/file/${imageFilename}`;
+    first.value.imageUrl = `${API_URL}/ai-images/data/file/${imageFilename}`;
+    first.value.imageFilename = imageFilename;
     first.value.createdAt = Date.now();
     first.value.elapsedMs = first.value.createdAt - first.value.startedAt;
 
