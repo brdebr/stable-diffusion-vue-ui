@@ -2,7 +2,7 @@ version: '3.3'
 
 services:
   stability-ai:
-    container_name: sd
+    container_name: stable-diffusion-core_container
     volumes:
       - ${PWD}/sd/src/predict.py:/src/predict.py:ro
       - ${PWD}/sd/src/inpainting.py:/src/inpainting.py:ro
@@ -16,14 +16,14 @@ services:
           devices:
             - capabilities: [gpu]
   stable-diffusion-api:
-    container_name: sd-api
+    container_name: stable-diffusion-api_container
     ports:
       - '9000:9000'
     build:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - generated:/app/generated
+      - ./generated:/app/generated
     depends_on:
       - stability-ai
 
