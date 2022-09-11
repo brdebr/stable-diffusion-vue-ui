@@ -51,7 +51,6 @@
                         use mask
                       </n-checkbox>
                       <n-checkbox
-                        v-if="false"
                         v-model:checked="isImage2image"
                         class="m-1"
                       >
@@ -114,71 +113,53 @@
               </div>
             </div>
           </div>
-          <!-- Images prompt -->
-          <template v-if="false">
+          <!-- Images prompt -- TODO-- add fade transition -->
+          <div v-if="isImage2image">
             <hr class="my-4" />
-            <div>
-              <div class="flex justify-center items-center w-full">
-                <label
-                  for="dropzone-file"
-                  class="flex flex-col justify-center items-center w-full h-64 bg-gray-50 rounded-lg border-2 border-gray-300 border-dashed cursor-pointer dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
-                >
-                  <div
-                    class="flex flex-col justify-center items-center pt-5 pb-6"
-                  >
-                    <svg
-                      aria-hidden="true"
-                      class="mb-3 w-10 h-10 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      ></path>
-                    </svg>
-                    <p class="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                      <span class="font-semibold">Click to upload</span> or drag
-                      and drop
-                    </p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                      SVG, PNG, JPG or GIF (MAX. 800x400px)
-                    </p>
-                  </div>
-                  <input
-                    id="dropzone-file"
-                    type="file"
-                    @change="setImage2ImagePrompt"
-                    class="hidden"
-                  />
-                </label>
-              </div>
-            </div>
-            <hr class="my-4 border-dashed" />
-            <div>
+            <div class="flex flex-col items-center mt-2 mb-6">
               <div>
-                <n-upload directory-dnd>
-                  <n-upload-dragger>
-                    <div style="margin-bottom: 12px">
-                      <n-icon size="22" :depth="3">
-                        <VolumeFileStorage class="w-9 h-9" />
-                      </n-icon>
-                    </div>
-                    <n-text style="font-size: 16px">
-                      Click or drag an Image Mask to this area to upload
-                    </n-text>
-                    <n-p depth="3" style="margin: 8px 0 0 0">
-                      COGER DESCRIPOTIOCN DE L SWAGGER
-                    </n-p>
-                  </n-upload-dragger>
-                </n-upload>
+                Difference from original
               </div>
+              <n-slider
+                  v-model:value="img2imgPromptStrength"
+                  class="w-full"
+                  :min="promptStrengthMin"
+                  :max="promptStrengthMax"
+                  :step="guidanceStep"
+                />
             </div>
-          </template>
+            <div class="init-image-container">
+              <FilePond
+              name="image2imageField"
+              ref="image2imageInput"
+              label-idle="Drop the initial image here or click to select from a folder..."
+              :allow-multiple="false"
+              :allow-file-encode="true"
+              accepted-file-types="image/jpeg, image/png"
+              :image-validate-size-max-width="512"
+              :image-validate-size-max-height="512"
+              @addfile="handleAddFile"
+              @removefile="handleRemoveFile"
+              />
+            </div>
+            <template v-if="isUsingMask">
+              <hr class="mb-4 mt-6 border-dashed" />
+              <div class="mask-image-container">
+                <FilePond
+                  name="image2imageMaskField"
+                  ref="image2imageMaskInput"
+                  label-idle="Use a mask image, stable diffusion will only paint on black areas of the mask"
+                  :allow-multiple="false"
+                  :allow-file-encode="true"
+                  accepted-file-types="image/jpeg, image/png"
+                  :image-validate-size-max-width="512"
+                  :image-validate-size-max-height="512"
+                  @addfile="handleAddMaskFile"
+                  @removefile="handleRemoveMaskFile"
+                />
+              </div>
+            </template>
+          </div>
         </form>
         <hr class="my-3" />
         <!-- Stable Diffusion settingss -->
@@ -394,12 +375,14 @@ Prompt,
 } from "./constants";
 import {
   useClipboard,
-  useDark,
-  useColorMode,
   useIntervalFn,
   useDateFormat,
 } from "@vueuse/core";
-import { sizes } from "./constants";
+import {
+  sizes,
+  promptStrengthMin,
+  promptStrengthMax
+} from "./constants";
 import {
   MisuseOutline,
   VolumeFileStorage,
@@ -449,6 +432,54 @@ import draggable from 'vuedraggable'
 import { stringifyStyle } from "@vue/shared";
 import TagInput from "./components/Tag-Input.vue";
 
+// Filepond
+import vueFilePond from "vue-filepond";
+import "filepond/dist/filepond.min.css";
+
+// Import the plugin code
+import FilePondPluginImageCrop from 'filepond-plugin-image-crop';
+import FilePondPluginImageValidateSize from 'filepond-plugin-image-validate-size';
+// @ts-expect-error - This has no types
+import FilePondPluginImageOverlay from 'filepond-plugin-image-overlay';
+import FilePondPluginImagePreview from "filepond-plugin-image-preview";
+import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
+import FilePondPluginFileEncode from 'filepond-plugin-file-encode';
+
+import 'filepond-plugin-image-overlay/dist/filepond-plugin-image-overlay.css'
+import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css";
+import { FilePondErrorDescription, FilePondFile } from "filepond";
+
+// Create component
+const FilePond = vueFilePond(
+  FilePondPluginFileValidateType,
+  FilePondPluginImagePreview,
+  FilePondPluginImageCrop,
+  FilePondPluginImageValidateSize,
+  FilePondPluginImageOverlay,
+  FilePondPluginFileEncode
+);
+
+const image2imageInput = ref();
+const image2imageMaskInput = ref();
+
+const image2imageFile = ref<FilePondFile | null>(null);
+const handleAddFile = (error: FilePondErrorDescription | null, file: FilePondFile) => {
+  image2imageFile.value = file;
+}
+const handleRemoveFile = (error: FilePondErrorDescription | null, file: FilePondFile) => {
+  image2imageFile.value = null;
+  image2imageMaskFile.value = null;
+  image2imageMaskInput.value.removeFile();
+}
+
+const image2imageMaskFile = ref<FilePondFile | null>(null);
+const handleAddMaskFile = (error: FilePondErrorDescription | null, file: FilePondFile) => {
+  image2imageMaskFile.value = file;
+}
+const handleRemoveMaskFile = (error: FilePondErrorDescription | null, file: FilePondFile) => {
+  image2imageMaskFile.value = null;
+}
+
 type ModifierGroup = {
   type: string;
   key: string;
@@ -465,10 +496,6 @@ const { images } = storeToRefs(imagesStore);
 const configsStore = useConfigsStore();
 const { guidance, height, width, seed, steps } = storeToRefs(configsStore);
 
-const mode = useColorMode();
-onMounted(() => {
-  mode.value = "dark";
-});
 
 const sizeOptions = sizes.map((size: Size) => ({
   value: `${size}` as const,
@@ -484,6 +511,7 @@ const promptObject = reactive<Prompt>({
   text: DEFAULT_PROMPT,
   modifiers: DEFAULT_MODIFIERS,
   finalPrompt: '',
+  image2image: '',
 });
 
 const autoCompleteValue = ref('');
@@ -546,7 +574,7 @@ const isUsingMask = ref(false);
 
 const img2imgFile = ref<string | ArrayBuffer | null>(null);
 const maskFile = ref<string | null>(null);
-const img2imgPromptStrength = ref(0.8);
+const img2imgPromptStrength = ref(0.7);
 
 const setImage2ImagePrompt = (e: Event) => {
   const eventTarget = e.target as HTMLInputElement;
@@ -569,7 +597,18 @@ const imagesToGenerate = ref(1);
 
 const handleFormSubmit = async () => {
   if(!isServerOnline.value) return;
-  const promptClone = JSON.parse(JSON.stringify(promptObject));
+  const promptClone: Prompt = JSON.parse(JSON.stringify(promptObject));
+  // @ts-expect-error - the type is not being picked
+  const image2imageValue = image2imageFile.value?.getFileEncodeDataURL();
+  if(image2imageValue) {
+    promptClone.image2image = image2imageValue;
+    promptClone.image2imageStrength = img2imgPromptStrength.value;
+  }
+  // @ts-expect-error - the type is not being picked
+  const image2imageMaskValue = image2imageMaskFile.value?.getFileEncodeDataURL();
+  if(image2imageMaskValue) {
+    promptClone.image2imageMask = image2imageMaskValue;
+  }
   queueStore.addToQueue(promptClone, imagesToGenerate.value);
   queueStore.execute();
 };
@@ -609,6 +648,8 @@ useIntervalFn(() => {
   queueStore.execute();
 }, 1000);
 </script>
+
+
 <style lang="scss">
 :root {
   color-scheme: dark;
@@ -635,8 +676,19 @@ casa {
   text-overflow: ellipsis;
 }
 
+.init-image-container,
+.mask-image-container {
+  .filepond--drop-label {
+    background-color: #272f40;
+    border-radius: 4px;
+    border: 1px solid #0043ae;
+    color: white;
+  }
+}
+
 .image-view {
-  @apply border-2 border-transparent hover:(border-blue-900 cursor-pointer) transition-colors
+  @apply border-2 border-transparent hover:(border-blue-900 cursor-pointer) transition-colors;
+  @apply object-contain;
   @apply w-[256px] h-[256px] min-w-[256px] min-h-[256px];
   @apply xl:(w-[512px] h-[512px] min-w-[512px] min-h-[512px]);
 }

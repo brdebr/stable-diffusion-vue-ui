@@ -30,6 +30,9 @@ export const buildGenerateImagePayload = (data: GeneratedImageData) => {
     prompt_modifiers: data.prompt.modifiers,
     seed: parseInt(data.seed) || '-1',
     width: data.width,
+    init_image: data.prompt.image2image || undefined,
+    prompt_strength: data.prompt.image2imageStrength || undefined,
+    mask: data.prompt.image2imageMask || undefined,
   }
 }
 

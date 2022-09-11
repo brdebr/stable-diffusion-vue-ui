@@ -30,6 +30,7 @@ const buildMergeImgWithConfigs = (item: PayloadToQueueImage, configs: ConfigPara
 export const useQueueStore = defineStore('queue', () => {
   const imagesStore = useImageStore();
   const configsStore = useConfigsStore();
+  const soundEnabled = ref(true);
   const { guidance, height, seed, steps, width } = storeToRefs(configsStore);
 
   const items = ref<Array<PayloadToQueueImage>>([]);
@@ -97,5 +98,6 @@ export const useQueueStore = defineStore('queue', () => {
     addToQueue,
     removeFromQueue,
     execute,
+    soundEnabled,
   }
 })

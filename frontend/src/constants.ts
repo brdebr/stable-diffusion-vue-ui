@@ -4,7 +4,10 @@ import { NConfigProvider, GlobalThemeOverrides, darkTheme } from 'naive-ui'
 export type Prompt = {
   text: string
   modifiers: string[]
-  finalPrompt: string
+  finalPrompt: string,
+  image2image?: string,
+  image2imageMask?: string,
+  image2imageStrength?: number,
 }
 
 export type GeneratedImageData = {
@@ -22,9 +25,9 @@ export type GeneratedImageData = {
   imageUrl?: string;
   imageFilename?: string;
   // img2img params ->
-  init_image?: string;
-  prompt_strength?: string;
-  mask?: string;
+  // init_image?: string;
+  // prompt_strength?: string;
+  // mask?: string;
 };
 
 type storedInPiniaParams =
@@ -63,6 +66,9 @@ export const API_URL = import.meta.env.DEV ? 'http://localhost:9000' : '';
 export const API_GENERATE_IMAGE_URL = `${API_URL}/api/generate_image` as const;
 export const API_GENERATE_HEALTH = `${API_URL}/api/server_status` as const;
 
+export const promptStrengthMax = 1;
+export const promptStrengthMin = 0.1;
+
 export const SOUNDS_MAP = {
   'server-online': '/sound/hangover-sound.mp3',
   'done': '/sound/notification-pretty-good.mp3',
@@ -71,7 +77,8 @@ export const SOUNDS_MAP = {
 export type SoundName = keyof typeof SOUNDS_MAP;
 
 
-export const sizes = ["64", "128", "256", "512"] as const;
+// export const sizes = ["64", "128", "256", "512", "768"] as const;
+export const sizes = ["64", "128", "256", "512", "768"] as const;
 export type Size = typeof sizes[number];
 
 
